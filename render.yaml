@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: gigachat-jbi-bot
+    env: node
+    plan: free
+    buildCommand: "npm install"
+    startCommand: "node api/calc.js"
+    envVars:
+      - key: GIGACHAT_CLIENT_ID
+        value: "YOUR_GIGACHAT_CLIENT_ID"
+      - key: GIGACHAT_CLIENT_SECRET
+        value: "YOUR_GIGACHAT_CLIENT_SECRET"
