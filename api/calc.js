@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import products from "../../products.json" assert { type: "json" };
+import products from "../../products.json";  // Используем require() для загрузки JSON
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -9,54 +9,28 @@ export default async function handler(req, res) {
   try {
     const { prompt } = req.body;
 
-    // Генерим токен
-    const auth = Buffer.from(
-      `${process.env.GIGACHAT_CLIENT_ID}:${process.env.GIGACHAT_CLIENT_SECRET}`
-    ).toString("base64");
+    // Получаем токен GigaChat из переменных окружения
+    const apiToken = process.env.GIGACHAT_API_TOKEN;
 
-    const tokenReq = await fetch(
-      "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Basic ${auth}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-          "RqUID": crypto.randomUUID()
-        },
-        body: "scope=GIGACHAT_API_PERS"
-      }
-    );
-
-    if (!tokenReq.ok) {
-      const errText = await tokenReq.text();
-      console.log("Ошибка токена:", errText);
-      return res.status(500).json({ error: "Ошибка токена", details: errText });
+    if (!apiToken) {
+      return res.status(500).json({ error: "API Token is missing" });
     }
 
-    const tokenData = await tokenReq.json();
-    const token = tokenData.access_token;
-
-    // Отправляем запрос в GigaChat
-    const reply = await fetch(
-      "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          model: "GigaChat",
-          messages: [
-            {
-              role: "system",
-              content: `Ты бот. Вот список товаров: ${JSON.stringify(products)}`
-            },
-            { role: "user", content: prompt }
-          ]
-        })
-      }
-    );
+    // Запрос в GigaChat API
+    const reply = await fetch("https://gigachat.devices.sberbank.ru/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiToken}` // Используем API Token для авторизации
+      },
+      body: JSON.stringify({
+        model: "GigaChat",
+        messages: [
+          { role: "system", content: `Ты бот. Вот список товаров: ${JSON.stringify(products)}` },
+          { role: "user", content: prompt }
+        ]
+      })
+    });
 
     const data = await reply.json();
     res.status(200).json(data);
