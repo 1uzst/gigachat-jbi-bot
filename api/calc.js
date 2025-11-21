@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
-import products from "../../products.json";  // Используем require() для загрузки JSON
+import path from "path";
+import { promises as fs } from "fs";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -8,6 +9,10 @@ export default async function handler(req, res) {
 
   try {
     const { prompt } = req.body;
+
+    // Загружаем products.json
+    const productsPath = path.join(process.cwd(), "products.json");
+    const products = JSON.parse(await fs.readFile(productsPath, "utf8"));
 
     // Получаем токен GigaChat из переменных окружения
     const apiToken = process.env.GIGACHAT_API_TOKEN;
